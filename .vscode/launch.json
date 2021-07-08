@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Local File",
+            "type": "Ruby",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/",
+            "program": "/workspaces/dev_bosh-azure-cpi-release/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/test.rb",
+            "args": ["-c", "${workspaceRoot}/cpi.cfg"]
+        },
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Bash-Debug (simplest configuration)",
+            "program": "${file}"
+        }
+    ]
+}

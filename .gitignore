@@ -1,0 +1,4 @@
+cpi.cfg
+deploy.sh
+bosh-azure-cpi-release
+bosh-azure-cpi-release-*.tar.gz

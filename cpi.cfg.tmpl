@@ -1,0 +1,18 @@
+---
+azure:
+  environment: AzureCloud
+  subscription_id: ${SUBSCRIPTION_ID}
+  storage_account_name: ${STORAGE_ACCOUNT}
+  resource_group_name: ${RESOURCE_GROUP}
+  tenant_id: ${TENANT_ID}
+  client_id: ${SPN_CLIENT_ID}
+  client_secret: "${SPN_CLIENT_SECRET}"
+  ssh_user: vcap
+  ssh_public_key: ${SSH_PUBLIC_KEY}
+  default_security_group: ${NETWORK_SECURITY_GROUP}
+  debug_mode: false
+  use_managed_disks: false
+registry:
+  endpoint: http://127.0.0.1:25695
+  user: admin
+  password: admin

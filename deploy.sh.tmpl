@@ -1,0 +1,17 @@
+bosh create-env bosh-deployment/bosh.yml \
+    --state=state.json \
+    --vars-store=creds.yml \
+    -o bosh-deployment/azure/cpi.yml \
+    -v director_name=bosh-1 \
+    -v internal_cidr=${SUBNET_ADDRESS_PREFIX} \
+    -v internal_gw=${SUBNET_GATEWAY} \
+    -v internal_ip=${DIRECTOR_IP} \
+    -v vnet_name=${VIRTUAL_NETWORK} \
+    -v subnet_name=${SUBNET_NAME} \
+    -v subscription_id=${SUBSCRIPTION_ID} \
+    -v tenant_id=${TENANT_ID} \
+    -v client_id=${SPN_CLIENT_ID} \
+    -v client_secret=${SPN_CLIENT_SECRET} \
+    -v resource_group_name=${RESOURCE_GROUP} \
+    -v storage_account_name=${STORAGE_ACCOUNT} \
+    -v default_security_group=${NETWORK_SECURITY_GROUP}
