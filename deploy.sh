@@ -1,3 +1,13 @@
+#!/bin/bash
+set -e
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if [ ! -d "${SCRIPT_DIR}/.local/bosh-deployment" ]; then
+    git clone https://github.com/cloudfoundry/bosh-deployment "${SCRIPT_DIR}/.local/bosh-deployment"
+fi
+
+pushd "${SCRIPT_DIR}/.local/"
+
 bosh create-env bosh-deployment/bosh.yml \
     --state=state.json \
     --vars-store=creds.yml \
@@ -15,3 +25,10 @@ bosh create-env bosh-deployment/bosh.yml \
     -v resource_group_name=${RESOURCE_GROUP} \
     -v storage_account_name=${STORAGE_ACCOUNT} \
     -v default_security_group=${NETWORK_SECURITY_GROUP}
+
+popd
+
+echo "Uploading stemcell ubuntu xenial..."
+bosh -e bosh-1 upload-stemcell --sha1 b05d331dc762214388d6e7196bc235e9ac2e0b0a https://bosh-core-stemcells.s3-accelerate.amazonaws.com/621.125/bosh-stemcell-621.125-azure-hyperv-ubuntu-xenial-go_agent.tgz
+
+$SHELL

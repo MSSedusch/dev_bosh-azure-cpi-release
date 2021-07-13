@@ -1,0 +1,32 @@
+
+azs:
+- name: z1
+
+vm_types:
+- name: default
+  cloud_properties:
+    instance_type: Standard_D4s_v4
+
+compilation:
+  workers: 1
+  reuse_compilation_vms: true
+  az: z1
+  vm_type: default
+  network: default
+
+networks:
+- name: default
+  subnets:
+  - az: z1
+    range: 10.0.0.0/16
+    gateway: 10.0.0.1
+    reserved: [10.0.0.1-10.0.0.4]
+    static: [10.0.0.11-10.0.0.20]
+    cloud_properties:
+      virtual_network_name: boshnet
+      subnet_name: bosh
+
+vm_extensions:
+- name: lb
+  cloud_properties:
+    load_balancer: lb1,lb2

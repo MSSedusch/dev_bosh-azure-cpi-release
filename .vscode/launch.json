@@ -5,12 +5,35 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Unit Tests",
+            "type": "Ruby",
+            "request": "launch",
+            "program": "/usr/local/bundle/bin/bundle",
+            "cwd": "${workspaceRoot}/bosh-azure-cpi-release/src/bosh_azure_cpi/",
+            "args": [
+                "exec",
+                "rspec",
+                "spec/unit/",
+                "--format",
+                "documentation",
+                "--profile"
+            ],
+            "env": {
+                "AZURE_STORAGE_ACCOUNT":"foo",
+                "AZURE_STORAGE_ACCESS_KEY": "YmFyCg=="
+            }
+        },
+        {
+            // Does not work yet, test.rb needs to be fixed
             "name": "Debug Local File",
             "type": "Ruby",
             "request": "launch",
-            "cwd": "${workspaceRoot}/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/",
-            "program": "/workspaces/dev_bosh-azure-cpi-release/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/test.rb",
-            "args": ["-c", "${workspaceRoot}/cpi.cfg"]
+            "cwd": "${workspaceRoot}/.local/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/",
+            "program": "${workspaceRoot}/test.rb",
+            "args": [
+                "-c",
+                "${workspaceRoot}/.local/cpi.cfg"
+            ]
         },
         {
             "type": "bashdb",

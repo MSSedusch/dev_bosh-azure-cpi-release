@@ -6,8 +6,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 echo "This script will ask for all neccessary parameters to deploy a BOSH director and to deploy a new VM using the CPI directly. If the Azure resources do not exist, they will be created."
 
 continue=true
-if [ -f ${SCRIPT_DIR}/cpi.cfg ] || [ -f ${SCRIPT_DIR}/deploy.sh ]; then
-    echo "cpi.cfg or deploy.sh already exists. Do you want to recreate the files? (y/N): "
+if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
+    echo "cpi.cfg already exists. Do you want to recreate the files? (y/N): "
     read continue_choice
     if [ "${continue_choice}"  = "" ] || [ "${continue_choice}"  = "n" ] || [ "${continue_choice}"  = "N" ]; then
         continue=false
@@ -18,12 +18,8 @@ if [ ! "${continue}" == true ]; then
     exit 0
 fi
 
-if [ -f ${SCRIPT_DIR}/cpi.cfg ]; then
-    rm ${SCRIPT_DIR}/cpi.cfg
-fi
-
-if [ -f ${SCRIPT_DIR}/deploy.sh ]; then
-    rm ${SCRIPT_DIR}/deploy.sh
+if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
+    rm ${SCRIPT_DIR}/.local/cpi.cfg
 fi
 
 echo "Enter the tenant id: "  
@@ -129,8 +125,26 @@ export SUBNET_ADDRESS_PREFIX
 export SUBNET_GATEWAY
 export DIRECTOR_IP
 
-envsubst < cpi.cfg.tmpl >> cpi.cfg
-envsubst < deploy.sh.tmpl >> deploy.sh
+cat >.local/azurecreds.json <<EOL
+{
+    "TENANT_ID":"${TENANT_ID}",
+    "SUBSCRIPTION_ID":"${SUBSCRIPTION_ID}",
+    "SPN_CLIENT_ID":"${SPN_CLIENT_ID}",
+    "SPN_CLIENT_SECRET":"${SPN_CLIENT_SECRET}",
+    "RESOURCE_GROUP":"${RESOURCE_GROUP}",
+    "AZURE_REGION":"${AZURE_REGION}",
+    "STORAGE_ACCOUNT":"${STORAGE_ACCOUNT}",
+    "SSH_PUBLIC_KEY":"${SSH_PUBLIC_KEY}",
+    "NETWORK_SECURITY_GROUP":"${NETWORK_SECURITY_GROUP}",
+    "VIRTUAL_NETWORK":"${VIRTUAL_NETWORK}",
+    "SUBNET_NAME":"${SUBNET_NAME}",
+    "SUBNET_ADDRESS_PREFIX":"${SUBNET_ADDRESS_PREFIX}",
+    "SUBNET_GATEWAY":"${SUBNET_GATEWAY}",
+    "DIRECTOR_IP":"${DIRECTOR_IP}"
+}
+EOL
+
+envsubst < cpi.cfg.tmpl > ./local/cpi.cfg
 
 echo "Logging in to Azure"
 az login --tenant "${TENANT_ID}" --service-principal --username "${SPN_CLIENT_ID}" --password "${SPN_CLIENT_SECRET}" > /dev/null
@@ -173,6 +187,11 @@ fi
 
 echo "Done. Please checkout https://github.com/cloudfoundry/bosh-azure-cpi-release or your own fork to /workspace/dev_bosh-azure-cpi-release/bosh-azure-cpi-release now."
 
+# echo "Creating stemcell container"
+# az storage container create --account-name "${STORAGE_ACCOUNT}" --name "cpi" --account-key "${storageKey}"  > /dev/null
+
+
 #TODO:
 # Create storage account container stemcell
 # Upload stemcell to storage account
+$SHELL
