@@ -3,129 +3,157 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-echo "This script will ask for all neccessary parameters to deploy a BOSH director and to deploy a new VM using the CPI directly. If the Azure resources do not exist, they will be created."
-
-continue=true
-if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
-    echo "cpi.cfg already exists. Do you want to recreate the files? (y/N): "
-    read continue_choice
-    if [ "${continue_choice}"  = "" ] || [ "${continue_choice}"  = "n" ] || [ "${continue_choice}"  = "N" ]; then
-        continue=false
-    fi
+azurecreds_choice=false
+if [ -f .local/azurecreds.json ]; then
+    echo "azurecreds.json already exists. Do you want to read the configuration parameter from this file? (Y/n): "
+    read azurecreds_choice
+    if [ "${azurecreds_choice}"  = "" ] || [ "${azurecreds_choice}"  = "y" ] || [ "${azurecreds_choice}"  = "Y" ]; then
+        azurecreds_choice=true
+        source ./env.sh
+    fi    
 fi
 
-if [ ! "${continue}" == true ]; then
-    exit 0
-fi
+if [ ! "${azurecreds_choice}" == false ]; then
 
-if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
-    rm ${SCRIPT_DIR}/.local/cpi.cfg
-fi
+    echo "This script will ask for all neccessary parameters to deploy a BOSH director and to deploy a new VM using the CPI directly. If the Azure resources do not exist, they will be created."
 
-echo "Enter the tenant id: "  
-read TENANT_ID
-
-echo "Enter the subscription id: "  
-read SUBSCRIPTION_ID
-
-echo "Enter the service principal id (client id/application id): "  
-read SPN_CLIENT_ID
-
-echo "Enter the service principal password: "  
-read -s SPN_CLIENT_SECRET
-
-echo "Enter the resource group name: "  
-read RESOURCE_GROUP
-
-echo "Enter the Azure Region: "  
-read AZURE_REGION
-
-echo "Enter the storage account name: "  
-read STORAGE_ACCOUNT
-
-echo "Enter the ssh public key: "  
-read SSH_PUBLIC_KEY
-
-echo "Enter the name of the network security group (press enter for nsg):"  
-read NETWORK_SECURITY_GROUP
-
-echo "Enter the name of the virtual network name (press enter for bosh-vnet):"  
-read VIRTUAL_NETWORK
-
-echo "Enter the name of the subnet (press enter for bosh):"  
-read SUBNET_NAME
-
-addressPrefixDefault="10.0.0.0/16"
-while true; do
-    SUBNET_ADDRESS_PREFIX=""
-    echo "Enter the address prefix of the vnet/subnet (press enter for ${addressPrefixDefault}):"  
-    read SUBNET_ADDRESS_PREFIX
-
-    if [ "${SUBNET_ADDRESS_PREFIX}" == "" ]; then
-        SUBNET_ADDRESS_PREFIX="${addressPrefixDefault}"
+    continue=true
+    if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
+        echo "cpi.cfg already exists. Do you want to recreate the file? (y/N): "
+        read continue_choice
+        if [ "${continue_choice}"  = "" ] || [ "${continue_choice}"  = "n" ] || [ "${continue_choice}"  = "N" ]; then
+            continue=false
+        fi
     fi
 
-    if [[ $SUBNET_ADDRESS_PREFIX =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then # /[0-9][0-9]?$
-        break
+    if [ ! "${continue}" == true ]; then
+        exit 0
     fi
 
-    echo "Please enter a correct address prefix."
-done
-
-[[ $SUBNET_ADDRESS_PREFIX =~ (^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)[0-9]{1,3}/[0-9]{1,2}$ ]];
-ipPrefix="${BASH_REMATCH[1]}"
-defaultGW="${ipPrefix}1"
-
-while true; do
-    SUBNET_GATEWAY=""
-    echo "Enter the IP address of the gateway in subnet ${SUBNET_NAME} (press enter for ${defaultGW}):"  
-    read SUBNET_GATEWAY
-
-    if [ "${SUBNET_GATEWAY}" == "" ]; then
-        SUBNET_GATEWAY="${defaultGW}"
+    if [ -f ${SCRIPT_DIR}/.local/cpi.cfg ]; then
+        rm ${SCRIPT_DIR}/.local/cpi.cfg
     fi
 
-    if [[ $SUBNET_GATEWAY =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        break
+    if [ ! -d .local ]; then
+        mkdir .local
     fi
 
-    echo "Please enter a correct IP address for the subnet gateway."
-done
+    echo "Enter the tenant id: "  
+    read TENANT_ID
 
-defaultDirector="${ipPrefix}6"
-while true; do
-    DIRECTOR_IP=""
-    echo "Enter the IP address of the BOSH director in subnet ${SUBNET_NAME} (press enter for ${defaultDirector}):"  
-    read DIRECTOR_IP
+    echo "Enter the subscription id: "  
+    read SUBSCRIPTION_ID
 
-    if [ "${DIRECTOR_IP}" == "" ]; then
-        DIRECTOR_IP="${defaultDirector}"
+    echo "Enter the service principal id (client id/application id): "  
+    read SPN_CLIENT_ID
+
+    echo "Enter the service principal password: "  
+    read -s SPN_CLIENT_SECRET
+
+    echo "Enter the resource group name: "  
+    read RESOURCE_GROUP
+
+    echo "Enter the Azure Region: "  
+    read AZURE_REGION
+
+    echo "Enter the storage account name: "  
+    read STORAGE_ACCOUNT
+
+    echo "Enter the ssh public key: "  
+    read SSH_PUBLIC_KEY
+
+    defaultNSG="nsg"
+    echo "Enter the name of the network security group (press enter for ${defaultNSG}):"
+    read NETWORK_SECURITY_GROUP
+    if [ "${NETWORK_SECURITY_GROUP}" == "" ]; then
+        NETWORK_SECURITY_GROUP="${defaultNSG}"
     fi
 
-    if [[ $DIRECTOR_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        break
+    defaultVNET="bosh-vnet"
+    echo "Enter the name of the virtual network name (press enter for ${defaultVNET}):"
+    read VIRTUAL_NETWORK
+    if [ "${VIRTUAL_NETWORK}" == "" ]; then
+        VIRTUAL_NETWORK="${defaultVNET}"
     fi
 
-    echo "Please enter a correct IP address for the BOSH director."
+    defaultSubnet="bosh"
+    echo "Enter the name of the subnet (press enter for ${defaultSubnet}):"  
+    read SUBNET_NAME
+    if [ "${SUBNET_NAME}" == "" ]; then
+        SUBNET_NAME="${defaultSubnet}"
+    fi
 
-done
+    addressPrefixDefault="10.0.0.0/16"
+    while true; do
+        SUBNET_ADDRESS_PREFIX=""
+        echo "Enter the address prefix of the vnet/subnet (press enter for ${addressPrefixDefault}):"  
+        read SUBNET_ADDRESS_PREFIX
 
-export TENANT_ID
-export SUBSCRIPTION_ID
-export SPN_CLIENT_ID
-export SPN_CLIENT_SECRET
-export RESOURCE_GROUP
-export AZURE_REGION
-export STORAGE_ACCOUNT
-export SSH_PUBLIC_KEY
-export NETWORK_SECURITY_GROUP
-export VIRTUAL_NETWORK
-export SUBNET_NAME
-export SUBNET_ADDRESS_PREFIX
-export SUBNET_GATEWAY
-export DIRECTOR_IP
+        if [ "${SUBNET_ADDRESS_PREFIX}" == "" ]; then
+            SUBNET_ADDRESS_PREFIX="${addressPrefixDefault}"
+        fi
 
-cat >.local/azurecreds.json <<EOL
+        if [[ $SUBNET_ADDRESS_PREFIX =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then # /[0-9][0-9]?$
+            break
+        fi
+
+        echo "Please enter a correct address prefix."
+    done
+
+    [[ $SUBNET_ADDRESS_PREFIX =~ (^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)[0-9]{1,3}/[0-9]{1,2}$ ]];
+    ipPrefix="${BASH_REMATCH[1]}"
+    defaultGW="${ipPrefix}1"
+
+    while true; do
+        SUBNET_GATEWAY=""
+        echo "Enter the IP address of the gateway in subnet ${SUBNET_NAME} (press enter for ${defaultGW}):"  
+        read SUBNET_GATEWAY
+
+        if [ "${SUBNET_GATEWAY}" == "" ]; then
+            SUBNET_GATEWAY="${defaultGW}"
+        fi
+
+        if [[ $SUBNET_GATEWAY =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+            break
+        fi
+
+        echo "Please enter a correct IP address for the subnet gateway."
+    done
+
+    defaultDirector="${ipPrefix}6"
+    while true; do
+        DIRECTOR_IP=""
+        echo "Enter the IP address of the BOSH director in subnet ${SUBNET_NAME} (press enter for ${defaultDirector}):"  
+        read DIRECTOR_IP
+
+        if [ "${DIRECTOR_IP}" == "" ]; then
+            DIRECTOR_IP="${defaultDirector}"
+        fi
+
+        if [[ $DIRECTOR_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+            break
+        fi
+
+        echo "Please enter a correct IP address for the BOSH director."
+
+    done
+
+    export TENANT_ID
+    export SUBSCRIPTION_ID
+    export SPN_CLIENT_ID
+    export SPN_CLIENT_SECRET
+    export RESOURCE_GROUP
+    export AZURE_REGION
+    export STORAGE_ACCOUNT
+    export SSH_PUBLIC_KEY
+    export NETWORK_SECURITY_GROUP
+    export VIRTUAL_NETWORK
+    export SUBNET_NAME
+    export SUBNET_ADDRESS_PREFIX
+    export SUBNET_GATEWAY
+    export DIRECTOR_IP
+
+    cat >.local/azurecreds.json <<EOL
 {
     "TENANT_ID":"${TENANT_ID}",
     "SUBSCRIPTION_ID":"${SUBSCRIPTION_ID}",
@@ -144,7 +172,9 @@ cat >.local/azurecreds.json <<EOL
 }
 EOL
 
-envsubst < cpi.cfg.tmpl > ./local/cpi.cfg
+fi
+
+envsubst < cpi.cfg.tmpl > .local/cpi.cfg
 
 echo "Logging in to Azure"
 az login --tenant "${TENANT_ID}" --service-principal --username "${SPN_CLIENT_ID}" --password "${SPN_CLIENT_SECRET}" > /dev/null
