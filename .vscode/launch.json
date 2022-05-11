@@ -24,11 +24,10 @@
             }
         },
         {
-            // Does not work yet, test.rb needs to be fixed
             "name": "Debug Local File",
             "type": "Ruby",
             "request": "launch",
-            "cwd": "${workspaceRoot}/.local/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/",
+            "cwd": "${workspaceRoot}/bosh-azure-cpi-release/src/bosh_azure_cpi/bin/",
             "program": "${workspaceRoot}/test.rb",
             "args": [
                 "-c",
