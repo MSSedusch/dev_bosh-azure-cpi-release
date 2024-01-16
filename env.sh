@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+#set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 if [ -f "${SCRIPT_DIR}/.local/azurecreds.json" ]; then
@@ -20,6 +20,8 @@ if [ -f "${SCRIPT_DIR}/.local/azurecreds.json" ]; then
     SUBNET_ADDRESS_PREFIX=$(cat .local/azurecreds.json | jq -r ".SUBNET_ADDRESS_PREFIX")
     SUBNET_GATEWAY=$(cat .local/azurecreds.json | jq -r ".SUBNET_GATEWAY")
     DIRECTOR_IP=$(cat .local/azurecreds.json | jq -r ".DIRECTOR_IP")
+    BOSH_USER_PASSWORD=$(cat .local/azurecreds.json | jq -r ".BOSH_USER_PASSWORD")
+    RESOURCE_GROUP_RELEASE=$(cat .local/azurecreds.json | jq -r ".RESOURCE_GROUP_RELEASE")
 
     export TENANT_ID
     export SUBSCRIPTION_ID
@@ -35,6 +37,8 @@ if [ -f "${SCRIPT_DIR}/.local/azurecreds.json" ]; then
     export SUBNET_ADDRESS_PREFIX
     export SUBNET_GATEWAY
     export DIRECTOR_IP
+    export BOSH_USER_PASSWORD
+    export RESOURCE_GROUP_RELEASE
 
 else
     echo "environment cache not found"

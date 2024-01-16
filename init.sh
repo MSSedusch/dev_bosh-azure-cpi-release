@@ -168,7 +168,8 @@ if [ "${azurecreds_choice}" == "false" ]; then
     "SUBNET_NAME":"${SUBNET_NAME}",
     "SUBNET_ADDRESS_PREFIX":"${SUBNET_ADDRESS_PREFIX}",
     "SUBNET_GATEWAY":"${SUBNET_GATEWAY}",
-    "DIRECTOR_IP":"${DIRECTOR_IP}"
+    "DIRECTOR_IP":"${DIRECTOR_IP}",
+    "BOSH_USER_PASSWORD":"${BOSH_USER_PASSWORD}"
 }
 EOL
 
@@ -218,14 +219,17 @@ fi
 echo "Done. Please checkout https://github.com/cloudfoundry/bosh-azure-cpi-release or your own fork to /workspace/dev_bosh-azure-cpi-release/bosh-azure-cpi-release now."
 
 echo "Creating stemcell"
-az storage container create --account-name "${STORAGE_ACCOUNT}" --name "cpi" --account-key "${storageKey}"  > /dev/null
-wget https://storage.googleapis.com/bosh-core-stemcells/1.79/bosh-stemcell-1.79-azure-hyperv-ubuntu-bionic-go_agent.tgz -O .local/stemcell.tgz
-mkdir .local/stemcell/
-tar -xf .local/stemcell.tgz -C .local/stemcell/
-tar -xf .local/stemcell/image -C .local/stemcell/
-az storage blob upload --account-name "${STORAGE_ACCOUNT}" --account-key "${storageKey}" --container-name "cpi" --file .local/stemcell/root.vhd --name root.vhd
-url=$(az storage blob url  --account-name "${STORAGE_ACCOUNT}" --account-key "${storageKey}" --container-name "cpi" --name root.vhd | jq -r '.')
-az image create --name 8d149245-82d5-4c93-9d00-66e9e54bee88-P-westeurope --resource-group "${RESOURCE_GROUP}" --source "${url}" --location "${AZURE_REGION}" --os-type Linux --storage-sku Premium_LRS
+containerName="stemcell"
+stemcellName="bosh-stemcell-8d149245-82d5-4c93-9d00-66e9e54bee88" 
+az storage container create --account-name "${STORAGE_ACCOUNT}" --name "${containerName}" --account-key "${storageKey}"  > /dev/null
 
-
-$SHELL
+if [ ! -f ".local/stemcell/root.vhd" ]
+then
+    wget https://storage.googleapis.com/bosh-core-stemcells/1.79/bosh-stemcell-1.79-azure-hyperv-ubuntu-bionic-go_agent.tgz -O .local/stemcell.tgz
+    mkdir .local/stemcell/
+    tar -xf .local/stemcell.tgz -C .local/stemcell/
+    tar -xf .local/stemcell/image -C .local/stemcell/
+fi
+az storage blob upload --account-name "${STORAGE_ACCOUNT}" --account-key "${storageKey}" --container-name "${containerName}" --file .local/stemcell/root.vhd --name "${stemcellName}.vhd"
+#url=$(az storage blob url  --account-name "${STORAGE_ACCOUNT}" --account-key "${storageKey}" --container-name "${containerName}" --name root.vhd | jq -r '.')
+#az image create --name 8d149245-82d5-4c93-9d00-66e9e54bee88-P-westeurope --resource-group "${RESOURCE_GROUP}" --source "${url}" --location "${AZURE_REGION}" --os-type Linux --storage-sku Premium_LRS
